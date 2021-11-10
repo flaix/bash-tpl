@@ -316,11 +316,13 @@ function trim() {
 # usage: escape_regex varname
 #
 function escape_regex() {
-	local -n ref=$1
+	local _ref=$1
+	local _v
 	# shellcheck disable=SC2001  # Too complex for ${variable//search/replace}
 	# shellcheck disable=SC2016  # Not using expansion, prefer single quotes
 	# shellcheck disable=SC2034  # ref is used
-	ref=$(sed 's/[][\.|$()?+*^]/\\&/g' <<< "${!1}") # Omits: [{}]
+	_v=$(sed 's/[][\.|$()?+*^]/\\&/g' <<< "${!1}") # Omits: [{}]
+	eval "$_ref='$_v'"
 }
 
 ##
@@ -328,9 +330,11 @@ function escape_regex() {
 # usage: normalize_directive varname
 #
 function normalize_directive() {
-	local -n ref=$1
+	local _ref=$1
+	local _v
 	# shellcheck disable=SC2034  # ref is used
-	ref=$(tr 'a-z_' 'A-Z-' <<< "${!1}")
+	_v=$(tr 'a-z_' 'A-Z-' <<< "${!1}")
+	eval "$_ref='$_v'"
 }
 
 #######################################################################
@@ -1055,7 +1059,8 @@ function parse_env_delims() {
 # $2+ args to parse
 #
 function parse_args() {
-	local -n __local_parse_args=$1 # nameref
+	local __local_parse_args=$1
+	local -a _v=${!1}
 	shift
 	while (($#)); do
 		case "$1" in
@@ -1115,13 +1120,13 @@ function parse_args() {
 				shift 2
 				;;
 			-)
-				__local_parse_args+=("$1")
+				_v+=("$1")
 				shift
 				;;
 			--)
 				shift
 				while (($#)); do
-					__local_parse_args+=("$1")
+					_v+=("$1")
 					shift
 				done
 				;;
@@ -1130,11 +1135,15 @@ function parse_args() {
 				exit 1
 				;;
 			*) # preserve positional arguments
-				__local_parse_args+=("$1")
+				_v+=("$1")
 				shift
 				;;
 		esac
 	done
+	if [[ -z "${_v[0]}" ]]; then
+		unset _v[0]
+	fi
+	eval "$__local_parse_args=(\"${_v[@]}\")"
 }
 
 function main() {
