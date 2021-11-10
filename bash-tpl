@@ -520,7 +520,7 @@ function print_text() {
 # process_tags
 #
 function process_tags() {
-	local line args quoted
+	local line args quoted group1
 	line="${1}"
 	args=""
 	while [ -n "${line}" ]; do
@@ -536,15 +536,17 @@ function process_tags() {
 			line="${BASH_REMATCH[6]}"
 		elif [[ "${line}" =~ $TAG_STATEMENT_REGEX ]]; then
 			# echo "# STMT TAG MATCH: $(declare -p BASH_REMATCH)" >&2
-			trim BASH_REMATCH[1]
-			args="${args}\"\$(${BASH_REMATCH[1]})\""
+			group1=${BASH_REMATCH[1]}
+			trim group1
+			args="${args}\"\$(${group1})\""
 			line="${BASH_REMATCH[5]}"
 		# Check standard regex last as its a super-set of quote and stmt regex
 		#
 		elif [[ "${line}" =~ $TAG_STD_REGEX ]]; then
 			# echo "# STD TAG MATCH: $(declare -p BASH_REMATCH)" >&2
-			trim BASH_REMATCH[1]
-			args="${args}\"${BASH_REMATCH[1]}\""
+			group1=${BASH_REMATCH[1]}
+			trim group1
+			args="${args}\"${group1}\""
 			line="${BASH_REMATCH[5]}"
 		# Assume next character is TEXT - extract and process remainder
 		#
